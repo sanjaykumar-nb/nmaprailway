@@ -2,9 +2,15 @@ from flask import Flask, request, jsonify
 import nmap
 import threading
 import time
-from gunicorn.app.base import BaseApplication
+import telebot
+import os
 
+# Initialize Flask App
 app = Flask(__name__)
+
+# Telegram Bot Token (Replace with your own)
+BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
+bot = telebot.TeleBot(BOT_TOKEN)
 
 # Keep-Alive Function to Prevent Railway from Sleeping
 def keep_alive():
@@ -35,24 +41,31 @@ def scan():
 
     return jsonify({"target": target, "scan_result": scan_results})
 
-# Gunicorn Class for Stable Deployment
-class FlaskApp(BaseApplication):
-    def __init__(self, app, options=None):
-        self.app = app
-        self.options = options or {}
-        super().__init__()
+# Telegram Command to Trigger Nmap Scan
+@bot.message_handler(commands=['scan'])
+def handle_scan(message):
+    try:
+        target = message.text.split(" ")[1]  # Extract target from message
+        api_url = f"https://your-nmap-api.up.railway.app/scan?target={target}"
+        response = requests.get(api_url).json()
 
-    def load_config(self):
-        for key, value in self.options.items():
-            self.cfg.set(key, value)
+        if "error" in response:
+            bot.reply_to(message, f"Error: {response['error']}")
+        else:
+            bot.reply_to(message, f"Nmap Scan Results for {target}:\n{response['scan_result']}")
+    except IndexError:
+        bot.reply_to(message, "Usage: /scan <target>\nExample: /scan example.com")
 
-    def load(self):
-        return app
+# Background Thread to Run Telegram Bot
+def start_telegram_bot():
+    bot.polling(none_stop=True)
 
 if __name__ == "__main__":
     # Start Keep-Alive Thread
     threading.Thread(target=keep_alive, daemon=True).start()
 
-    # Start Gunicorn Server
-    options = {"bind": "0.0.0.0:5000", "workers": 1}
-    FlaskApp(app, options).run()
+    # Start Telegram Polling in a Separate Thread
+    threading.Thread(target=start_telegram_bot, daemon=True).start()
+
+    # Run Flask App
+    app.run(host='0.0.0.0', port=5000)
