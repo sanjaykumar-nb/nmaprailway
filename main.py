@@ -5,18 +5,18 @@ import telebot
 import nmap
 from flask import Flask, request, jsonify
 
-# Load Telegram Bot Token from Railway environment variables
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+# 🔥 HARD-CODED BOT TOKEN (Replace with your actual bot token)
+BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
 
 # Validate the Bot Token
 if not BOT_TOKEN or ":" not in BOT_TOKEN:
-    raise ValueError("❌ Invalid Telegram Bot Token! Check your Railway Variables.")
+    raise ValueError("❌ Invalid Telegram Bot Token! Please check and update the correct token.")
 
 # Initialize Flask App & Telebot
 app = Flask(__name__)
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Home Route
+# Home Route (Check if API is running)
 @app.route('/')
 def home():
     return jsonify({"message": "Nmap API is running!"})
@@ -71,4 +71,3 @@ def start_telegram_bot():
 if __name__ == "__main__":
     threading.Thread(target=start_telegram_bot, daemon=True).start()
     app.run(host='0.0.0.0', port=5000)
-
