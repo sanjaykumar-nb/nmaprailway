@@ -7,9 +7,9 @@ import requests
 
 # Flask App
 app = Flask(__name__)
-
+BOT_TOKEN='7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw'
 # Telegram Bot Setup
-BOT_TOKEN = os.getenv("7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw")  # Load from Railway environment
+BOT_TOKEN = os.getenv("BOT_TOKEN")  # Load from Railway environment
 if not BOT_TOKEN or ":" not in BOT_TOKEN:
     raise ValueError("❌ Invalid Telegram Bot Token! Check your Railway Variables.")
 
