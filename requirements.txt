@@ -1,3 +1,5 @@
 flask
 python-nmap
+telebot
 gunicorn
+requests
