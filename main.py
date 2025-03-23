@@ -1,7 +1,18 @@
 from flask import Flask, request, jsonify
 import nmap
+import threading
+import time
 
 app = Flask(__name__)
+
+# Keep-Alive Function to Prevent Railway from Sleeping
+def keep_alive():
+    while True:
+        try:
+            print("Keeping API alive...")
+            time.sleep(300)  # Every 5 minutes
+        except Exception as e:
+            print(f"Error in Keep-Alive: {e}")
 
 @app.route('/')
 def home():
@@ -24,4 +35,6 @@ def scan():
     return jsonify({"target": target, "scan_result": scan_results})
 
 if __name__ == '__main__':
+    # Start Keep-Alive Thread
+    threading.Thread(target=keep_alive, daemon=True).start()
     app.run(host='0.0.0.0', port=5000)
