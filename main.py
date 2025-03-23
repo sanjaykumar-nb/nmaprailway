@@ -9,7 +9,7 @@ import time
 app = Flask(__name__)
 
 # Telegram Bot Token (Replace with your bot token)
-BOT_TOKEN = "YOUR_TELEGRAM_BOT_TOKEN"
+BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Keep-Alive Function to Prevent Railway from Sleeping
