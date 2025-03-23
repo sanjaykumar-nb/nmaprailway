@@ -5,23 +5,19 @@ import telebot
 import nmap
 from flask import Flask, request, jsonify
 
-# 🔥 HARD-CODED BOT TOKEN (Replace with your actual bot token)
+# 🔥 Hardcoded Telegram Bot Token (Replace with your actual bot token)
 BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
-
-# Validate the Bot Token
-if not BOT_TOKEN or ":" not in BOT_TOKEN:
-    raise ValueError("❌ Invalid Telegram Bot Token! Please check and update the correct token.")
 
 # Initialize Flask App & Telebot
 app = Flask(__name__)
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Home Route (Check if API is running)
+# ✅ Home Route - Check if API is running
 @app.route('/')
 def home():
     return jsonify({"message": "Nmap API is running!"})
 
-# Nmap Scan API Route
+# ✅ Nmap Scan API Route
 @app.route('/scan', methods=['GET'])
 def scan():
     target = request.args.get('target')
@@ -37,12 +33,17 @@ def scan():
 
     return jsonify({"target": target, "scan_result": scan_results})
 
-# Telegram Bot Command: /scan
+# ✅ Telegram Bot Command: /scan
 @bot.message_handler(commands=['scan'])
 def handle_scan(message):
     try:
         # Extract target from message
-        target = message.text.split(" ")[1]
+        command_parts = message.text.split(" ")
+        if len(command_parts) < 2:
+            bot.reply_to(message, "❌ Usage: /scan <target>\nExample: /scan google.com")
+            return
+        
+        target = command_parts[1]
         api_url = f"https://your-nmap-api.up.railway.app/scan?target={target}"
 
         # Notify user that scan is starting
@@ -50,8 +51,9 @@ def handle_scan(message):
 
         # Call Railway API
         response = requests.get(api_url)
+        
         if response.status_code != 200:
-            bot.reply_to(message, f"⚠️ Error: {response.text}")
+            bot.reply_to(message, f"⚠️ Error: API returned {response.status_code} - {response.text}")
             return
 
         data = response.json()
@@ -59,12 +61,10 @@ def handle_scan(message):
             bot.reply_to(message, f"⚠️ Error: {data['error']}")
         else:
             bot.reply_to(message, f"✅ Scan Results for {target}:\n{data['scan_result']}")
-    except IndexError:
-        bot.reply_to(message, "❌ Usage: /scan <target>\nExample: /scan google.com")
     except Exception as e:
         bot.reply_to(message, f"❌ Unexpected Error: {str(e)}")
 
-# Start Telegram Bot in a Thread
+# ✅ Start Telegram Bot in a Separate Thread
 def start_telegram_bot():
     bot.polling(none_stop=True)
 
