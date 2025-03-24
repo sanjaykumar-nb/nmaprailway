@@ -5,7 +5,7 @@ import subprocess
 import requests
 
 # Set your Telegram Bot Token here (replace with your actual token)
-BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"  # e.g., "1234567890:ABCdefGHIJKLMnoPQRstuVWXYZ"
+BOT_TOKEN = "7717097105:AAH5JxYXCPVlCxNyQOY4ZfkgX-gFIdfFWdU"  # e.g., "1234567890:ABCdefGHIJKLMnoPQRstuVWXYZ"
 
 # Delete any existing webhook to avoid conflicts
 delete_webhook_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
