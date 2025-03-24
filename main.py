@@ -1,58 +1,49 @@
-from flask import Flask, request, jsonify
-import nmap
-import threading
-import time
-from gunicorn.app.base import BaseApplication
+import os
+import json
+import requests
+import telebot
+from flask import Flask, request
+import subprocess
 
+# Set your bot token
+BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
+WEBHOOK_URL = "https://nmaprailway.railway.app/webhook"
+
+bot = telebot.TeleBot(BOT_TOKEN)
 app = Flask(__name__)
 
-# Keep-Alive Function to Prevent Railway from Sleeping
-def keep_alive():
-    while True:
-        try:
-            print("Keeping API alive...")
-            time.sleep(300)  # Every 5 minutes
-        except Exception as e:
-            print(f"Error in Keep-Alive: {e}")
+# Set webhook for Telegram bot
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    update = request.get_json()
+    if "message" in update:
+        chat_id = update["message"]["chat"]["id"]
+        text = update["message"]["text"]
 
-@app.route('/')
-def home():
-    return jsonify({"message": "Nmap API is running!"})
+        if text.startswith("/scan"):
+            target = text.split(" ")[1] if len(text.split()) > 1 else None
+            if target:
+                scan_result = run_nmap_scan(target)
+                bot.send_message(chat_id, f"Nmap Scan Results for {target}:\n{scan_result}")
+            else:
+                bot.send_message(chat_id, "⚠️ Please provide a target. Example: `/scan example.com`")
+    
+    return "OK", 200
 
-@app.route('/scan', methods=['GET'])
-def scan():
-    target = request.args.get('target')
-    if not target:
-        return jsonify({"error": "No target provided!"}), 400
-
-    nm = nmap.PortScanner()
-
+# Function to run Nmap scan
+def run_nmap_scan(target):
     try:
-        nm.scan(target, arguments='-T4 --top-ports 10')  # Optimized for fast scanning
-        scan_results = nm.csv()  # Get results in CSV format
+        result = subprocess.run(["nmap", "-F", target], capture_output=True, text=True)
+        return result.stdout
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return f"Error running Nmap: {str(e)}"
 
-    return jsonify({"target": target, "scan_result": scan_results})
-
-# Gunicorn Class for Stable Deployment
-class FlaskApp(BaseApplication):
-    def __init__(self, app, options=None):
-        self.app = app
-        self.options = options or {}
-        super().__init__()
-
-    def load_config(self):
-        for key, value in self.options.items():
-            self.cfg.set(key, value)
-
-    def load(self):
-        return app
+# Set up webhook on bot startup
+@app.route("/")
+def index():
+    bot.remove_webhook()
+    bot.set_webhook(url=WEBHOOK_URL)
+    return "Bot is running!", 200
 
 if __name__ == "__main__":
-    # Start Keep-Alive Thread
-    threading.Thread(target=keep_alive, daemon=True).start()
-
-    # Start Gunicorn Server
-    options = {"bind": "0.0.0.0:5000", "workers": 1}
-    FlaskApp(app, options).run()
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
