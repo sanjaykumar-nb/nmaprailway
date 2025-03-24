@@ -43,7 +43,7 @@ def analyze_scan(scan_output):
     elif "open" in scan_output:
         return "Caution: Some ports are open. Please review the scan output for potential vulnerabilities."
     else:
-        return "Further analysis required."
+        return "Caution: Some ports are open."
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
