@@ -4,47 +4,41 @@ import telebot
 import subprocess
 import requests
 
-# Set your Telegram Bot Token here (replace with your actual token)
-BOT_TOKEN = "7717097105:AAH5JxYXCPVlCxNyQOY4ZfkgX-gFIdfFWdU"  # e.g., "1234567890:ABCdefGHIJKLMnoPQRstuVWXYZ"
+# Replace with your actual Telegram Bot Token
+BOT_TOKEN = "7717097105:AAH5JxYXCPVlCxNyQOY4ZfkgX-gFIdfFWdU"
 
-# Delete any existing webhook to avoid conflicts
+# Delete any existing webhook
 delete_webhook_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
-try:
-    response = requests.get(delete_webhook_url)
-    print("Webhook deletion response:", response.json())
-except Exception as e:
-    print("Error deleting webhook:", str(e))
+del_resp = requests.get(delete_webhook_url)
+print("Webhook deletion response:", del_resp.json())
 
-# Wait a few seconds for Telegram to process the deletion
-time.sleep(2)
+time.sleep(2)  # Wait for Telegram to process
 
-# Initialize the TeleBot instance
+# Check webhook status
+get_webhook_url = f"https://api.telegram.org/bot{BOT_TOKEN}/getWebhookInfo"
+info_resp = requests.get(get_webhook_url)
+print("Webhook info after deletion:", info_resp.json())
+
+# Initialize bot
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# Handler for /start command
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     bot.reply_to(message, "👋 Welcome! Use /scan <target> to perform an Nmap scan.")
 
-# Handler for /scan command
 @bot.message_handler(commands=['scan'])
 def handle_scan(message):
     parts = message.text.split()
     if len(parts) < 2:
         bot.reply_to(message, "⚠️ Usage: /scan <target>\nExample: /scan example.com")
         return
-
     target = parts[1]
     bot.reply_to(message, f"🔍 Scanning {target}... Please wait.")
 
     try:
-        # Run Nmap with the fast scan option; capturing stdout and stderr
-        process = subprocess.run(
-            ["nmap", "-F", target],
-            capture_output=True,
-            text=True,
-            check=False
-        )
+        # Use TCP Connect scan (-sT) instead of the default scan mode
+        process = subprocess.run(["nmap", "-sT", "-p 1-100", target], 
+                                 capture_output=True, text=True, check=False)
         output = process.stdout + "\n" + process.stderr
         bot.reply_to(message, f"✅ Scan Results for {target}:\n```\n{output}\n```", parse_mode="Markdown")
     except Exception as e:
