@@ -1,51 +1,45 @@
-import telebot
-import requests
 import os
+import telebot
 import subprocess
+import requests
 
-# 🔹 Set Telegram Bot Token
-BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"
+# Set your Telegram Bot Token here (hard-coded for simplicity)
+BOT_TOKEN = "7924802116:AAHhn6UBw_fZSYX39ZSUSCZKcFKjSxLAIDw"  # Example format: "1234567890:ABCdefGHIJKLMnoPQRstuVWXYZ"
+
+# Delete any existing webhook so that polling can be used without conflict
+delete_webhook_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
+response = requests.get(delete_webhook_url)
+print("Delete webhook response:", response.json())
+
+# Initialize the TeleBot instance
 bot = telebot.TeleBot(BOT_TOKEN)
 
-# 🔹 Ensure webhook is deleted to avoid conflicts
-delete_webhook_url = f"https://api.telegram.org/bot{BOT_TOKEN}/deleteWebhook"
-requests.get(delete_webhook_url)
+# --- Command Handlers ---
 
-# 🔹 Nmap Scan Function
-def run_nmap_scan(target):
-    try:
-        result = subprocess.check_output(["nmap", target], text=True)
-        return result
-    except subprocess.CalledProcessError as e:
-        return f"Error running Nmap: {e}"
-
-# 🔹 Handle /start
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "👋 Welcome! Use /scan <website> to run an Nmap scan.")
+    bot.reply_to(message, "👋 Welcome to the Nmap Scanner Bot!\nUse /scan <target> to run an Nmap scan.")
 
-# 🔹 Handle /scan
 @bot.message_handler(commands=['scan'])
 def handle_scan(message):
     try:
         parts = message.text.split()
         if len(parts) < 2:
-            bot.reply_to(message, "⚠ Please provide a website/IP. Example: /scan example.com")
+            bot.reply_to(message, "⚠️ Usage: /scan <target>\nExample: /scan example.com")
             return
         
         target = parts[1]
-        bot.reply_to(message, f"🔎 Scanning {target}... Please wait.")
+        bot.reply_to(message, f"🔍 Scanning {target}... Please wait.")
 
-        # Run Nmap
-        scan_result = run_nmap_scan(target)
-
-        # Send result to user
-        bot.reply_to(message, f"🛡 Nmap Scan Results for {target}:\n```\n{scan_result}\n```", parse_mode="Markdown")
+        # Run the Nmap scan using the "-F" option (fast scan on common ports)
+        result = subprocess.check_output(["nmap", "-F", target], text=True)
+        bot.reply_to(message, f"✅ Scan Results for {target}:\n```\n{result}\n```", parse_mode="Markdown")
     
     except Exception as e:
-        bot.reply_to(message, f"❌ Error: {str(e)}")
+        bot.reply_to(message, f"❌ Error running Nmap scan: {str(e)}")
 
-# 🔹 Start Polling Mode (Ensures Only One Bot Instance Runs)
+# --- Main Execution: Start Polling ---
 if __name__ == "__main__":
-    print("🚀 Bot is running...")
+    print("🚀 Starting Telegram Bot using polling...")
+    # Using infinity_polling() ensures the bot continues to listen for updates.
     bot.infinity_polling()
