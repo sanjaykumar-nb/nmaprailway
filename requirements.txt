@@ -1,5 +1,7 @@
-flask
 python-nmap
 telebot
 gunicorn
 requests
+flask
+pyTelegramBotAPI
+
