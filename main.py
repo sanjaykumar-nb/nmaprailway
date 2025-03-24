@@ -1,5 +1,12 @@
 import telebot
+
 import subprocess
+
+try:
+    process = subprocess.run(["nmap", "--version"], capture_output=True, text=True, check=True)
+    print("✅ Nmap Installed:\n", process.stdout)
+except Exception as e:
+    print("❌ Nmap is not installed:", str(e))
 
 BOT_TOKEN = "7717097105:AAH5JxYXCPVlCxNyQOY4ZfkgX-gFIdfFWdU"
 bot = telebot.TeleBot(BOT_TOKEN)
